@@ -18,14 +18,19 @@ tar -zcf ${out}/${dirname}_backups/${ts}_${dirname}.tar.gz ${inp}
 cd ${out}/${dirname}_backups/
 array=()
 IFS=$'\n' read -r -d '' -a array < <( ls -1t | head -n +2 && printf '\0' )
-diff_res=$(diff ${array[0]} ${array[1]})
-if [ "${diff_res}" != "" ]; then
-  ls -1t | tail -n +21 | xargs rm -f
-  cd -
-  exit 0
-fi
+num_files=${#array[@]}
 
-rm ${array[0]}
+if [ $num_files -ge 2 ]; then
+  hash1=$(md5sum "${array[0]}" | awk '{print $1}')
+  hash2=$(md5sum "${array[1]}" | awk '{print $1}')
+
+  if [ "$hash1" == "$hash2" ]; then
+    rm "${array[1]}"
+    cd -
+    exit 0
+  fi
+fi
+ls -1t | tail -n +21 | xargs rm -f
 cd -
 exit 0
 
